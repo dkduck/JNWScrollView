@@ -48,7 +48,6 @@ static const CGFloat JNWClipViewDecelerationRate = 0.78;
 	self = [super initWithFrame:frame];
 	if (self == nil) return nil;
 	
-	self.wantsLayer = YES;
 	self.decelerationRate = JNWClipViewDecelerationRate;
 	
 	return self;

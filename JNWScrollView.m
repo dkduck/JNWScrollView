@@ -52,7 +52,6 @@
 #pragma mark Clip view swapping
 
 - (void)swapClipView {
-	self.wantsLayer = YES;
 	id documentView = self.documentView;
 	JNWClipView *clipView = [[JNWClipView alloc] initWithFrame:self.contentView.frame];
 	self.contentView = clipView;
