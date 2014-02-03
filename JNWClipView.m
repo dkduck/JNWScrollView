@@ -109,20 +109,20 @@ static CVReturn JNWScrollingCallback(CVDisplayLinkRef displayLink, const CVTimeS
 
 #pragma mark Scrolling
 
-- (void)scrollToPoint:(NSPoint)newOrigin {
-	// We should only attempt to animate ourselves if we know this point we're scrolling to
-	// was the point determined from a -scrollToRect:animated: call.
-	if (self.shouldAnimateOriginChange) {
-		self.shouldAnimateOriginChange = NO;
-		self.destinationOrigin = newOrigin;
-		[self beginScrolling];
-	} else {
-		// Otherwise, we stop any scrolling that is currently occurring (if needed) and let
-		// super's implementation handle a normal scroll.
-		[self endScrolling];
-		[super scrollToPoint:newOrigin];
-	}
-}
+//- (void)scrollToPoint:(NSPoint)newOrigin {
+//	// We should only attempt to animate ourselves if we know this point we're scrolling to
+//	// was the point determined from a -scrollToRect:animated: call.
+//	if (self.shouldAnimateOriginChange) {
+//		self.shouldAnimateOriginChange = NO;
+//		self.destinationOrigin = newOrigin;
+//		[self beginScrolling];
+//	} else {
+//		// Otherwise, we stop any scrolling that is currently occurring (if needed) and let
+//		// super's implementation handle a normal scroll.
+//		[self endScrolling];
+//		[super scrollToPoint:newOrigin];
+//	}
+//}
 
 - (BOOL)scrollRectToVisible:(NSRect)aRect animated:(BOOL)animated {
 	self.shouldAnimateOriginChange = animated;
