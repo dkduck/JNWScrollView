@@ -53,59 +53,59 @@ static const CGFloat JNWClipViewDecelerationRate = 0.78;
 	return self;
 }
 
-- (void)dealloc {
-	CVDisplayLinkRelease(_displayLink);
-	[NSNotificationCenter.defaultCenter removeObserver:self];
-}
+//- (void)dealloc {
+//	CVDisplayLinkRelease(_displayLink);
+//	[NSNotificationCenter.defaultCenter removeObserver:self];
+//}
 
 #pragma mark View Heirarchy
 
-- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
-	if (self.window != nil) {
-		[NSNotificationCenter.defaultCenter removeObserver:self name:NSWindowDidChangeScreenNotification object:self.window];
-	}
-	
-	[super viewWillMoveToWindow:newWindow];
-	
-	if (newWindow != nil) {
-		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateCVDisplay:) name:NSWindowDidChangeScreenNotification object:newWindow];
-	}
-}
+//- (void)viewWillMoveToWindow:(NSWindow *)newWindow {
+//	if (self.window != nil) {
+//		[NSNotificationCenter.defaultCenter removeObserver:self name:NSWindowDidChangeScreenNotification object:self.window];
+//	}
+//
+//	[super viewWillMoveToWindow:newWindow];
+//
+//	if (newWindow != nil) {
+//		[NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateCVDisplay:) name:NSWindowDidChangeScreenNotification object:newWindow];
+//	}
+//}
 
 #pragma mark Display link
 
-static CVReturn JNWScrollingCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *now, const CVTimeStamp *outputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext) {
-	@autoreleasepool {
-		JNWClipView *clipView = (__bridge id)displayLinkContext;
-		dispatch_async(dispatch_get_main_queue(), ^{
-			[clipView updateOrigin];
-		});
-	}
-	
-	return kCVReturnSuccess;
-}
-
-- (CVDisplayLinkRef)displayLink {
-	if (_displayLink == NULL) {
-		CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
-		CVDisplayLinkSetOutputCallback(_displayLink, &JNWScrollingCallback, (__bridge void *)self);
-		[self updateCVDisplay:nil];
-	}
-	
-	return _displayLink;
-}
-
-- (void)updateCVDisplay:(NSNotification *)note {
-	NSScreen *screen = self.window.screen;
-	if (screen == nil) {
-		NSDictionary *screenDictionary = NSScreen.mainScreen.deviceDescription;
-		NSNumber *screenID = screenDictionary[@"NSScreenNumber"];
-		CGDirectDisplayID displayID = screenID.unsignedIntValue;
-		CVDisplayLinkSetCurrentCGDisplay(_displayLink, displayID);
-	} else {
-		CVDisplayLinkSetCurrentCGDisplay(_displayLink, kCGDirectMainDisplay);
-	}
-}
+//static CVReturn JNWScrollingCallback(CVDisplayLinkRef displayLink, const CVTimeStamp *now, const CVTimeStamp *outputTime, CVOptionFlags flagsIn, CVOptionFlags *flagsOut, void *displayLinkContext) {
+//	@autoreleasepool {
+//		JNWClipView *clipView = (__bridge id)displayLinkContext;
+//		dispatch_async(dispatch_get_main_queue(), ^{
+//			[clipView updateOrigin];
+//		});
+//	}
+//
+//	return kCVReturnSuccess;
+//}
+//
+//- (CVDisplayLinkRef)displayLink {
+//	if (_displayLink == NULL) {
+//		CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
+//		CVDisplayLinkSetOutputCallback(_displayLink, &JNWScrollingCallback, (__bridge void *)self);
+//		[self updateCVDisplay:nil];
+//	}
+//
+//	return _displayLink;
+//}
+//
+//- (void)updateCVDisplay:(NSNotification *)note {
+//	NSScreen *screen = self.window.screen;
+//	if (screen == nil) {
+//		NSDictionary *screenDictionary = NSScreen.mainScreen.deviceDescription;
+//		NSNumber *screenID = screenDictionary[@"NSScreenNumber"];
+//		CGDirectDisplayID displayID = screenID.unsignedIntValue;
+//		CVDisplayLinkSetCurrentCGDisplay(_displayLink, displayID);
+//	} else {
+//		CVDisplayLinkSetCurrentCGDisplay(_displayLink, kCGDirectMainDisplay);
+//	}
+//}
 
 #pragma mark Scrolling
 
@@ -133,88 +133,88 @@ static CVReturn JNWScrollingCallback(CVDisplayLinkRef displayLink, const CVTimeS
 	self.scrollCompletion = completion;
 	BOOL success = [self scrollRectToVisible:rect animated:animated];
 	
-	if (!animated || !success) {
-		[self handleCompletionIfNeededWithSuccess:success];
-	}
+//	if (!animated || !success) {
+//		[self handleCompletionIfNeededWithSuccess:success];
+//	}
 	
 	return success;
 }
 
-- (void)beginScrolling {
-	if (CVDisplayLinkIsRunning(self.displayLink)) {
-		return;
-	}
-		
-	CVDisplayLinkStart(self.displayLink);
-}
-
-- (void)endScrolling {
-	if (!CVDisplayLinkIsRunning(self.displayLink)) {
-		return;
-	}
-	
-	CVDisplayLinkStop(self.displayLink);
-}
-
-// Sanitize the deceleration rate to [0, 1] so nothing unexpected happens.
-- (void)setDecelerationRate:(CGFloat)decelerationRate {
-	if (decelerationRate > 1) {
-		decelerationRate = 1;
-	}
-	else if (decelerationRate < 0) {
-		decelerationRate = 0;
-	}
-	_decelerationRate = decelerationRate;
-}
-
-- (NSScrollView *)containingScrollView {
-	if (_containingScrollView == nil) {
-		_containingScrollView = self.enclosingScrollView;
-		if (_containingScrollView == nil && [self.superview isKindOfClass:NSScrollView.class]) {
-			_containingScrollView = (NSScrollView *)self.superview;
-		}
-	}
-	
-	return _containingScrollView;
-}
-
-- (void)updateOrigin {
-	if (self.window == nil) {
-		[self endScrolling];
-		return;
-	}
-	
-	CGPoint o = self.bounds.origin;
-	CGPoint lastOrigin = o;
-	CGFloat deceleration = self.decelerationRate;
-	
-	// Calculate the next origin on a basic ease-out curve.
-	o.x = o.x * deceleration + self.destinationOrigin.x * (1 - self.decelerationRate);
-	o.y = o.y * deceleration + self.destinationOrigin.y * (1 - self.decelerationRate);
-	
-	// Calling -scrollToPoint: instead of manually adjusting the bounds lets us get the expected
-	// overlay scroller behavior for free.
-	[super scrollToPoint:o];
-	
-	// Make this call so that we can force an update of the scroller positions.
-	[self.containingScrollView reflectScrolledClipView:self];
-
-	if ((fabs(o.x - lastOrigin.x) < 0.1 && fabs(o.y - lastOrigin.y) < 0.1)) {
-		[self endScrolling];
-		
-		// Make sure we always finish out the animation with the actual coordinates
-		[super scrollToPoint:o];
-		[self handleCompletionIfNeededWithSuccess:YES];
-	}
-}
-
-#pragma mark Completion handling
-
-- (void)handleCompletionIfNeededWithSuccess:(BOOL)success {
-	if (self.scrollCompletion != nil) {
-		self.scrollCompletion(success);
-		self.scrollCompletion = nil;
-	}
-}
+//- (void)beginScrolling {
+//	if (CVDisplayLinkIsRunning(self.displayLink)) {
+//		return;
+//	}
+//
+//	CVDisplayLinkStart(self.displayLink);
+//}
+//
+//- (void)endScrolling {
+//	if (!CVDisplayLinkIsRunning(self.displayLink)) {
+//		return;
+//	}
+//
+//	CVDisplayLinkStop(self.displayLink);
+//}
+//
+//// Sanitize the deceleration rate to [0, 1] so nothing unexpected happens.
+//- (void)setDecelerationRate:(CGFloat)decelerationRate {
+//	if (decelerationRate > 1) {
+//		decelerationRate = 1;
+//	}
+//	else if (decelerationRate < 0) {
+//		decelerationRate = 0;
+//	}
+//	_decelerationRate = decelerationRate;
+//}
+//
+//- (NSScrollView *)containingScrollView {
+//	if (_containingScrollView == nil) {
+//		_containingScrollView = self.enclosingScrollView;
+//		if (_containingScrollView == nil && [self.superview isKindOfClass:NSScrollView.class]) {
+//			_containingScrollView = (NSScrollView *)self.superview;
+//		}
+//	}
+//
+//	return _containingScrollView;
+//}
+//
+//- (void)updateOrigin {
+//	if (self.window == nil) {
+//		[self endScrolling];
+//		return;
+//	}
+//
+//	CGPoint o = self.bounds.origin;
+//	CGPoint lastOrigin = o;
+//	CGFloat deceleration = self.decelerationRate;
+//
+//	// Calculate the next origin on a basic ease-out curve.
+//	o.x = o.x * deceleration + self.destinationOrigin.x * (1 - self.decelerationRate);
+//	o.y = o.y * deceleration + self.destinationOrigin.y * (1 - self.decelerationRate);
+//
+//	// Calling -scrollToPoint: instead of manually adjusting the bounds lets us get the expected
+//	// overlay scroller behavior for free.
+//	[super scrollToPoint:o];
+//
+//	// Make this call so that we can force an update of the scroller positions.
+//	[self.containingScrollView reflectScrolledClipView:self];
+//
+//	if ((fabs(o.x - lastOrigin.x) < 0.1 && fabs(o.y - lastOrigin.y) < 0.1)) {
+//		[self endScrolling];
+//
+//		// Make sure we always finish out the animation with the actual coordinates
+//		[super scrollToPoint:o];
+//		[self handleCompletionIfNeededWithSuccess:YES];
+//	}
+//}
+//
+//#pragma mark Completion handling
+//
+//- (void)handleCompletionIfNeededWithSuccess:(BOOL)success {
+//	if (self.scrollCompletion != nil) {
+//		self.scrollCompletion(success);
+//		self.scrollCompletion = nil;
+//	}
+//}
 
 @end
